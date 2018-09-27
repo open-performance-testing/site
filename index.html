@@ -2,18 +2,19 @@
 <html>
   <head>
     <title>Open Performance Testing</title>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.2/angular.min.js'></script>
     <style>
       html, body { height: 100%; margin: 0px; }
       body {
         display: flex;
+        flex-direction: column;
         font-family: sans-serif;
       }
       .full {
         display: flex;
-        align-items: center;
+        padding: 100px;
         text-align: center;
         justify-content: center;
-        flex-grow: 1;
       }
     </style>
   </head>
@@ -21,5 +22,20 @@
     <div class="full">
       <div><img src="/img/logo.svg" style="width: 150px;" /></div>
     </div>
+    <div ng-app="tests">
+      <ul>
+        <li ng-repeat="(id,test) in tests">
+          <a href="/test.html?id={{id}}">{{test.title}}</a>
+        </li>
+      </ul>
+    </div>
+    <script>
+      angular.module('tests', [])
+        .run(function($http, $rootScope) {
+          $http.get('/tests.json').then(function(r) {
+            $rootScope.tests = r.data;
+          });
+        });
+    </script>
   </body>
 </html>

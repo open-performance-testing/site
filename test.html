@@ -9,6 +9,7 @@
       body {
         display: flex;
         font-family: sans-serif;
+        justify-content: center;
       }
       .full {
         display: flex;
@@ -18,8 +19,34 @@
         flex-grow: 1;
         min-height: 300px;
       }
+      .test {
+        width: 800px;
+        flex-direction: column;
+      }
       h1 {
         font-weight: normal;
+        margin-bottom: 5px;
+      }
+      .warning {
+        background: #eee;
+        font-size: 80%;
+        padding: 20px;
+        border-radius: 10px;
+        border: 1px solid #ddd;
+      }
+      table {
+        width: 100%;
+        background: #eee;
+      }
+      tr:nth-child(2n) {
+        background: #fcfcfc;
+      }
+      tr:first-child {
+        background: #ddd;
+      }
+      th { text-align: left;}
+      td,th {
+        padding: 5px;
       }
     </style>
   </head>
@@ -27,11 +54,181 @@
     <div class="full" ng-if="!test">
       <div><h1 style="color: #CCC;" class="flash animated infinite slower">Loading test...</h1></div>
     </div>
+    <div class="test" ng-if="test">
+      <h1>
+        <span ng-bind="test.title"></span>
+        <img src="/img/logo.svg" style="height: 40px; float: right;" />
+      </h1>
+      <small ng-bind="test.contributor"></small><br /><br />
+      <b>Manufacturer:</b> <span ng-bind="test.make"></span><br />
+      <b>Model:</b> <span ng-bind="test.model"></span><br />
+      <b>Model #:</b> <span ng-bind="test.modelno"></span><br />
+      <br /><br /><br />
+
+      <div class="warning">
+          <b>Disclaimer: </b>
+          The content of this report is for your general information and use only.
+          Neither we nor any third parties provide any warranty or guarantee as to the
+          accuracy, timeliness, performance, completeness or suitability of the information
+          and materials found or offered on this website for any particular purpose. You
+          acknowledge that such information and materials may contain inaccuracies or errors
+          and we expressly exclude liability for any such inaccuracies or errors to the
+          fullest extent permitted by law.
+      </div><br /><br />
+
+      <h2>Test Setup</h3>
+      <span ng-bind="test.description" style="font-size: 90%"></span>
+      <br /><br />
+
+      <img ng-src="{{test.diagram}}" ng-if="test.diagram" style="width: 100%;" />
+      <br />
+      <br />
+
+      <div ng-if="test.xena">
+        <h3>Port configuration</h3>
+        <table cellspacing="0" cellpadding="0">
+          <tr>
+            <th>Port</th>
+            <th>MAC Address</th>
+            <th>IP Address</th>
+            <th>Net mask</th>
+            <th>Gateway</th>
+          </tr>
+          <tr ng-repeat="(id,port) in test.xena.ports">
+            <td ng-bind="id"></td>
+            <td ng-bind="port.P_MACADDRESS[0].slice(2)"></td>
+            <td ng-bind="port.P_IPADDRESS[0]"></td>
+            <td ng-bind="port.P_IPADDRESS[1]"></td>
+            <td ng-bind="port.P_IPADDRESS[2]"></td>
+          </tr>
+        </table>
+        <br />
+        <br />
+
+        <h3>Stream configuration</h3>
+        <table cellspacing="0" cellpadding="0">
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>SMAC</th>
+            <th>DMAC</th>
+            <th>Size</th>
+            <th>Data</th>
+          </tr>
+          <tr ng-repeat="(id,stream) in test.xena.streams">
+            <td ng-bind="id"></td>
+            <td ng-bind="stream.PS_COMMENT.join('').slice(1,-1)"></td>
+            <td ng-bind="stream.PS_PACKETHEADER[0].slice(14,26)"></td>
+            <td ng-bind="stream.PS_PACKETHEADER[0].slice(2,14)"></td>
+            <td ng-bind="
+              stream.PS_PACKETLENGTH[0].toLowerCase() + ' (' + 
+              stream.PS_PACKETLENGTH[1] + '-' + 
+              stream.PS_PACKETLENGTH[2] + ' bytes)' "></td>
+            <td ng-bind="
+              '0x' + stream.PS_PACKETHEADER[0].slice(26) +
+              ' + ' + stream.PS_PAYLOAD[0].toLowerCase() "></td>
+          </tr>
+        </table>
+        <br />
+        <br />
+
+        <h3>Stream statistics</h3>
+        <!-- Some table here -->
+      </div ng-if>
+
+    </div>
     <script>
+        var id = window.location.search.match(/\?id=(\d+)/)[1];
         angular.module('tv', [])
-          .run(function($rootScope, $http) {
+          .run(function($rootScope, $http, $q, Xena) {
             console.log('Test viewer running.');
-          });
+            $http.get('/tests/' + id + '/data.json')
+              .then(function(r) {
+                var test = r.data;
+                if(test.diagram) {
+                  test.diagram = '/tests/' + id + '/' + test.diagram + '/' + test.diagram;
+                }
+                if(test.xena) {
+                  Xena.load(test.xena).then(function(data) {
+                    test.xena = data;
+                    $rootScope.test = test;
+                    console.log(test);
+                  })
+                } else {
+                  $rootScope.test = r.data;
+                }
+              })
+          })
+
+          .service('Xena', function($q, $http) {
+            var ports = {};
+            var streams = {};
+            function loadPort(file) {
+              return $q(function(resolve, reject) {
+                $http.get('/tests/' + id + '/' + file + '/' + file)
+                  .then(function(r) {
+                    var portId = r.data.match(/;Port: ([\d/]+)/)[1];
+                    var lines =
+                      r.data
+                        .trim()
+                        .split('\r\n')
+                        .filter(function(l) { return !l.indexOf(';') == 0; });
+                    var config = { streams: {} };
+                    for(var i in lines) {
+                      var parts = lines[i].split(/ +/);
+                      var param = parts.shift();
+                      if(lines[i].match(/^PS[^ ]+ +\[\d+\]/)) {
+                        var stream = parseInt(parts.shift().slice(1,-1), 10);
+                        if(!config.streams[stream]) { config.streams[stream] = {}; }
+                        config.streams[stream][param] = parts.length > 0 ? parts : true
+                      } else {
+                        config[param] = parts.length > 0 ? parts : true
+                      }
+                    }
+
+                    // Update stream list
+                    for(var i in config.streams) {
+                      var stream_id = parseInt(config.streams[i].PS_TPLDID[0]);
+                      if(!streams[stream_id]) { streams[stream_id] = {}; }
+                      for(var j in config.streams[i]) {
+                        streams[stream_id][j] = config.streams[i][j];
+                      }
+                    }
+                    
+                    // Update port list
+                    delete config.streams;
+                    if(!ports[portId]) { ports[portId] = {}; }
+                    for(var i in config) {
+                      ports[portId][i] = config[i];
+                    }
+
+                    resolve();
+                  })
+              });
+            }
+
+            function loadResult(file) {
+              return $q(function(resolve, reject) {
+                resolve();
+              });
+            }
+            return {
+              load: function(xena) {
+                var subqueries = [];
+                if(xena.portconfigs) {
+                  for(var i in xena.portconfigs) {
+                    subqueries.push(loadPort(xena.portconfigs[i]));
+                  }
+                }
+                if(xena.csvresult) {
+                  subqueries.push(loadResult(xena.csvresult))
+                }
+                return $q.all(subqueries).then(function() {
+                  return { ports: ports, streams: streams }
+                });
+              }
+            }
+          })
       </script>
   </body>
 </html>

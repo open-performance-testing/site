@@ -2,8 +2,14 @@
 permalink: tests.json
 ---
 
-{
+{% assign tests = "" | split: ", " %}
+
 {% for page in site.tests %}
-"{{page.title}}": {{page.test | jsonify}},
+  {% assign test = page.test | jsonify %}
+  {% assign json = '"' | append: page.title | append: '": ' | append: test %} 
+  {% assign tests = tests | push: json %}
 {% endfor %}
+
+{
+{{ tests | join: "," }}
 }
