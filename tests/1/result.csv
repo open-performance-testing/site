@@ -1,0 +1,46 @@
+Global Stream Statistics Counters:
+ID:
+  TxPortName,Port 0/0/1,Port 0/0/0
+  StreamId,0,0
+  RxPortName,Port 0/0/0,Port 0/0/1
+  TidValueString,1,0
+  Description,1-to-0,0-to-1
+TX Totals:
+  TxPercent,0,0
+  TxBpsL1,0,0
+  TxBpsL2,0,0
+  TxPps,0,0
+  TxBytes,439023922924,439023201114
+  TxPackets,555037166,555036275
+RX Totals:
+  RxPercent,0,0
+  RxBpsL1,0,0
+  RxBpsL2,0,0
+  RxPps,0,0
+  RxBytes,439023922924,439023201114
+  RxPackets,555037166,555036275
+RX Errors:
+  TxRxDiff,0,0
+  LostPackets,0,0
+  MisorderPackets,0,0
+  PayloadErrors,0,0
+  BitErrorRateAggr,0,0
+  BitErrorRateCurr,0,0
+RX Latency:
+  AggrMinLatency,29040,29880
+  AggrAvgLatency,30812,30779
+  AggrMaxLatency,33280,33280
+  AggrLatencyRange,4240,3400
+  CurrMinLatency,N/A,N/A
+  CurrAvgLatency,N/A,N/A
+  CurrMaxLatency,N/A,N/A
+  CurrLatencyRange,N/A,N/A
+RX Jitter:
+  AggrMinJitter,0,0
+  AggrAvgJitter,0,0
+  AggrMaxJitter,2296,2256
+  AggrJitterRange,2296,2256
+  CurrMinJitter,0,0
+  CurrAvgJitter,0,0
+  CurrMaxJitter,0,0
+  CurrJitterRange,0,0
