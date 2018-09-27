@@ -1,2 +1,11 @@
 collections:
-  - tests
+  tests:
+    output: true
+    permalink: /tests/:path/data.json/
+
+defaults:
+  - scope:
+      path: ""
+      type: "tests"
+    values:
+      layout: "testjson"

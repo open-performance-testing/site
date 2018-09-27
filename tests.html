@@ -2,12 +2,8 @@
 permalink: tests.json
 ---
 
-[{% for test in site.tests %}
-  {
-    "description": "{{test.description}}",
-    "host": "{{test.host}}",
-    "make": "{{test.make}}",
-    "model": "{{test.model}}",
-    "modelno": "{{test.modelno}}"
-  }
-{% endfor %}]
+{
+{% for page in site.tests %}
+"{{page.title}}": {{page.test | jsonify}},
+{% endfor %}
+}
