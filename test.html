@@ -142,7 +142,7 @@
         angular.module('tv', [])
           .run(function($rootScope, $http, $q, Xena) {
             console.log('Test viewer running.');
-            $http.get('/tests/' + id + '/data.json')
+            $http.get('/tests/' + id + '/data.json/')
               .then(function(r) {
                 var test = r.data;
                 if(test.diagram) {
